@@ -4,51 +4,40 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Server {
+  public static void main(String[] args) throws IOException
+  {
+    try{
+      ServerSocket serverSocket = new ServerSocket(8888);
+      Socket clientSocket = serverSocket.accept();
+      DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
+      DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
 
-  private static Socket clientSocket; //сокет для общения
-  private static ServerSocket server; // серверсокет
-  private static BufferedReader in; // поток чтения из сокета
-  private static BufferedWriter out; // поток записи в сокет
-  private static FileReader fileReader;
-  private static FileWriter fileWriter;
-  private static Scanner scanner;
 
-  public static void main(String[] args) {
-    try {
+
+      StringBuilder contentBuilder = new StringBuilder();
       try {
-        scanner = new Scanner(System.in);
-        int port = scanner.nextInt();
-        server = new ServerSocket(port); // серверсокет прослушивает порт 4004
-        System.out.println("Сервер запущен!"); // хорошо бы серверу
-        //   объявить о своем запуске
-        clientSocket = server.accept(); // accept() будет ждать пока
-        //кто-нибудь не захочет подключиться
-        try { // установив связь и воссоздав сокет для общения с клиентом можно перейти
-          // к созданию потоков ввода/вывода.
-          // теперь мы можем принимать сообщения
-          in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-          //fileReader = new FileReader(new FileInputStream()
-          // и отправлять
-          out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-          String word = in.readLine(); // ждём пока клиент что-нибудь нам напишет
-          System.out.println(word);
-          // не долго думая отвечает клиенту
-          out.write("Привет, это Сервер! Подтверждаю, вы написали : " + word + "\n");
-          out.flush(); // выталкиваем все из буфера
-
-        } finally { // в любом случае сокет будет закрыт
-          clientSocket.close();
-          // потоки тоже хорошо бы закрыть
-          in.close();
-          out.close();
+        BufferedReader in = new BufferedReader(new FileReader("/public/clowns.html"));
+        String str;
+        while ((str = in.readLine()) != null) {
+          contentBuilder.append(str);
         }
-      } finally {
-        System.out.println("Сервер закрыт!");
-        server.close();
+        in.close();
+      } catch (IOException e) {
       }
-    } catch (IOException e) {
-      System.err.println(e);
-    }
-  }
+      String content = contentBuilder.toString();
 
+
+
+
+
+      inputStream.close();
+      outputStream.close();
+      clientSocket.close();
+      serverSocket.close();
+    }
+    catch(IOException e){
+      e.printStackTrace();
+    }
+
+  }
 }

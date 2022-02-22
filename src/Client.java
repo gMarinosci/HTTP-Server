@@ -16,7 +16,6 @@ public class Client {
       try {
         scanner = new Scanner(System.in);
         int port = scanner.nextInt();
-        // адрес - локальный хост, порт - 4004, такой же как у сервера
         clientSocket = new Socket("localhost", port); // этой строкой мы запрашиваем
         //  у сервера доступ на соединение
         reader = new BufferedReader(new InputStreamReader(System.in));
