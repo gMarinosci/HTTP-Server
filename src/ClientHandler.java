@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ public class ClientHandler implements Runnable {
 
   private Socket socket;
   private String path;
-  private OutputStream out = null;
+  private DataOutputStream out = null;
 
   public ClientHandler (Socket socket) {
     this.socket = socket;
@@ -23,22 +24,26 @@ public class ClientHandler implements Runnable {
 
     try {
       InputStream in = socket.getInputStream();
-      OutputStream out = socket.getOutputStream();
+      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
       List<String> request = readRequest(in);
+      String query = URLDecoder.decode(request.get(1), "UTF-8");
 
-      if (request.get(0).equals("GET")) {
+      try {
+        if (request.get(0).equals("GET")) {
 
-        if (request.get(1).equals("/")) {
-          sendResponse(200, false);
-        } else {
-          if (new File(request.get(1)).exists()) {
-            sendResponse(200, true);
+          if (request.get(1).equals("/")) {
+            sendResponse(200, query, false);
           } else {
-            sendResponse(404, false);
+            if (new File(path + query).exists()) {
+              sendResponse(200, query, true);
+            } else {
+              sendResponse(404, query, false);
+            }
           }
         }
+      } catch (Exception e) {
+        e.printStackTrace();
       }
-
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -56,32 +61,56 @@ public class ClientHandler implements Runnable {
     return tokens;
   }
 
-  public void sendResponse(int httpCode, String responseString, boolean isFile) throws Exception {
+  public void sendResponse(int httpCode, String query, boolean isFile) throws Exception {
 
     String indent = "\r\n";
     String statusLine = null;
+    String serverInfo = "Server: gm222hj_rs222ck";
+    String contentLength = "Content-Length: ";
+    String contentType = "Content-Type: ";
+    String connectionLine = "Connection: close" + indent;
     FileInputStream fileInputStream = null;
-    String fileName = null;
-
 
     if (httpCode == 200) {
       //TODO 200 response
-      statusLine = httpCode + " OK";
+      statusLine = "HTTP/1.1 200 OK" + indent;
+      if (isFile) {
+        fileInputStream = new FileInputStream(path + query);
+        contentLength += Integer.toString(fileInputStream.available()) + indent;
+        contentType += "text/html" + indent;
+      }
 
     } else if (httpCode == 404) {
       //TODO implement 404 response
-      statusLine = httpCode + " Not Found";
+      statusLine = "HTTP/1.1 404 not found"+ indent;
+    } else if (httpCode == 302) {
+      //TODO implement 302 response
+    } else if (httpCode == 500) {
+      //TODO implement 500 response
     }
 
+    out.writeBytes(statusLine);
+    out.writeBytes(serverInfo);
+    out.writeBytes(contentLength);
+    out.writeBytes(contentType);
+    out.writeBytes(connectionLine);
 
-    if(isFile){
-      fileName = responseString;
-      fileInputStream = new FileInputStream(fileName);
+    if (isFile) {
+      parseFile(fileInputStream);
+    } else {
+      out.writeBytes(query);
     }
-    else{
+  }
 
+  public void parseFile(FileInputStream inStream) throws Exception {
+    byte[] buffer = new byte[1024];
+    int bytesRead;
+
+    while ((bytesRead = inStream.read(buffer)) != -1) {
+      out.write(buffer, 0, bytesRead);
     }
-
-    out.write();
+    inStream.close();
   }
 }
+
+
