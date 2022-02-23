@@ -11,6 +11,7 @@ public class ClientHandler implements Runnable {
 
   private Socket socket;
   private String path;
+  private OutputStream out = null;
 
   public ClientHandler (Socket socket) {
     this.socket = socket;
@@ -55,12 +56,32 @@ public class ClientHandler implements Runnable {
     return tokens;
   }
 
-  public void sendResponse(int httpCode, boolean isFile) {
+  public void sendResponse(int httpCode, String responseString, boolean isFile) throws Exception {
+
+    String indent = "\r\n";
+    String statusLine = null;
+    FileInputStream fileInputStream = null;
+    String fileName = null;
+
 
     if (httpCode == 200) {
       //TODO 200 response
+      statusLine = httpCode + " OK";
+
     } else if (httpCode == 404) {
       //TODO implement 404 response
+      statusLine = httpCode + " Not Found";
     }
+
+
+    if(isFile){
+      fileName = responseString;
+      fileInputStream = new FileInputStream(fileName);
+    }
+    else{
+
+    }
+
+    out.write();
   }
 }
