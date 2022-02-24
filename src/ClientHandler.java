@@ -1,6 +1,9 @@
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -84,15 +87,44 @@ public class ClientHandler implements Runnable {
           out.writeBytes("<html><head><title>Hello guys</title></head><body><h1>this is the landing page</h1></body></html>");
           out.flush();
           out.close();
+
+        } else if (new File(path + query).isDirectory()) {
+          out.writeBytes("HTTP/1.1 200 OK\r\n");
+          out.writeBytes(serverInfo);
+          out.writeBytes(contentType);
+          out.writeBytes(connectionLine);
+          out.writeBytes(indent);
+          try {
+            parseFile(query);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          out.flush();
+          out.close();
+
+        } else if (!query.endsWith("html") && !query.endsWith("htm")) {
+
+          out.writeBytes("HTTP/1.1 200 OK\r\n");
+          out.writeBytes(serverInfo);
+          out.writeBytes("Content-type: image/png");
+          out.writeBytes(connectionLine);
+          out.writeBytes(indent);
+          try {
+            parseFile(query);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          out.flush();
+          out.close();
+
         } else {
           out.writeBytes("HTTP/1.1 200 OK\r\n");
           out.writeBytes(serverInfo);
           out.writeBytes(contentType);
           out.writeBytes(connectionLine);
           out.writeBytes(indent);
-          fileInputStream = new FileInputStream(new File(path + query));
           try {
-            parseFile(fileInputStream);
+            parseFile(query);
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -122,15 +154,17 @@ public class ClientHandler implements Runnable {
 
   }
 
-  public void parseFile(FileInputStream inStream) throws Exception {
+  public void parseFile(String query) throws Exception {
 
-    byte[] buffer = new byte[1024];
-    int bytesRead;
+    File file = new File(path + query);
+    FileInputStream inputStream = new FileInputStream(file);
     DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-    while ((bytesRead = inStream.read(buffer)) != -1) {
-      out.write(buffer, 0, bytesRead); //Basically it is the same problem out doesnt exist in this context thats why it evokes null pointer
-    }
-    inStream.close();
+    byte[] data = new byte[(int) file.length()];
+    inputStream.read(data);
+    inputStream.close();
+
+    out.write(data);
+    out.flush();
   }
 }
 
