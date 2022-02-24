@@ -23,6 +23,8 @@ public class Server {
         //When I try to debug it with you your line "new Thread(client).start();" it seems like threads is not exist
         //In my solution below it works properly, as I can see it socket=client, clientHandler=Thread, but im not sure but at least it runnable and debuggable
         clientHandler.run();
+        //new Thread(clientHandler).run();
+
       }
     } catch (IOException e){
       e.printStackTrace();

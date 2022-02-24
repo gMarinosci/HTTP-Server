@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -16,32 +17,31 @@ public class ClientHandler implements Runnable {
 
   public ClientHandler (Socket socket) {
     this.socket = socket;
-    this.path = "C:\\Users\\foxra\\Desktop\\Courses 2nd year\\Computer Networks\\compnet_ass2\\public";
+    this.path = "/Users/gabrielemarinosci/IdeaProjects/compnet_ass2/public";
   }
 
   @Override
   public void run() {
 
+    System.out.println("New thread started\n");
     try {
       InputStream in = socket.getInputStream();
-      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+      PrintStream out = new PrintStream(socket.getOutputStream());
       List<String> request = readRequest(in);
       String query = URLDecoder.decode(request.get(1), "UTF-8");
 
       try {
         if (request.get(0).equals("GET")) {
 
-          if (request.get(1).equals("/")) {
-            sendResponse(200, query, false);
+          if (new File(path + query).exists()) {
+            sendResponse(200, query);
           } else {
-            if (new File(path + query).exists()) {
-              sendResponse(200, query, true);
-            } else {
-              sendResponse(404, query, false);
-            }
+            sendResponse(404, query);
           }
+
         }
-      } catch (Exception e) {
+      } catch (IOException e) {
+        sendResponse(500, query);
         e.printStackTrace();
       }
 
@@ -61,48 +61,65 @@ public class ClientHandler implements Runnable {
     return tokens;
   }
 
-  public void sendResponse(int httpCode, String query, boolean isFile) throws Exception {
+  public void sendResponse(int httpCode, String query) throws IOException {
 
     String indent = "\r\n";
     String statusLine = null;
-    String serverInfo = "Server: gm222hj_rs223ck";
+    String serverInfo = "Server: gm222hj_rs223ck\r\n";
     String contentLength = "Content-Length: ";
-    String contentType = "Content-Type: ";
+    String contentType = "Content-Type: text/html" + indent;
     String connectionLine = "Connection: close" + indent;
     FileInputStream fileInputStream = null;
     DataOutputStream out = new DataOutputStream(socket.getOutputStream()); // it should be inside setter not inside run function, otherwise it doesnt exist here and thats why it invoked null excpetion
 
+    switch (httpCode) {
 
-    if (httpCode == 200) {
-      //TODO 200 response
-      statusLine = "HTTP/1.1 200 OK" + indent;
-      if (isFile) {
-        fileInputStream = new FileInputStream(path + query);
-        contentLength += Integer.toString(fileInputStream.available()) + indent;
-        contentType += "text/html" + indent;
-      }
+      case 200:
+        if (query.equals("/")) {
+          out.writeBytes("HTTP/1.1 200 OK\r\n");
+          out.writeBytes(serverInfo);
+          out.writeBytes(contentType);
+          out.writeBytes(connectionLine);
+          out.writeBytes(indent);
+          out.writeBytes("<html><head><title>Hello guys</title></head><body><h1>this is the landing page</h1></body></html>");
+          out.flush();
+          out.close();
+        } else {
+          out.writeBytes("HTTP/1.1 200 OK\r\n");
+          out.writeBytes(serverInfo);
+          out.writeBytes(contentType);
+          out.writeBytes(connectionLine);
+          out.writeBytes(indent);
+          fileInputStream = new FileInputStream(new File(path + query));
+          try {
+            parseFile(fileInputStream);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          out.flush();
+          out.close();
+        }
+        break;
 
-    } else if (httpCode == 404) {
-      //TODO implement 404 response
-      statusLine = "HTTP/1.1 404 not found"+ indent;
-    } else if (httpCode == 302) {
-      //TODO implement 302 response
-    } else if (httpCode == 500) {
-      //TODO implement 500 response
+      case 404:
+        System.out.println("resource not found");
+        out.writeBytes("HTTP/1.1 404 Not found\r\n");
+        out.writeBytes(serverInfo);
+        out.writeBytes(contentType);
+        out.writeBytes(connectionLine);
+        out.writeBytes("\r\n");
+        out.writeBytes("<html><head>Error 404</head></html>\r\n");
+        out.flush();
+        out.close();
+        break;
+
+      case 500:
+        break;
+
+      default:
+        System.out.println("Something went wrong\n");
     }
 
-
-    out.writeBytes(statusLine); //2nd problem seems like that out is null and setter doesnt work
-    out.writeBytes(serverInfo);
-    out.writeBytes(contentLength);
-    out.writeBytes(contentType);
-    out.writeBytes(connectionLine);
-
-    if (isFile) {
-      parseFile(fileInputStream); // the problem that evokes here in line 113 and its similar as previous
-    } else {
-      out.writeBytes(query); //No output
-    }
   }
 
   public void parseFile(FileInputStream inStream) throws Exception {
