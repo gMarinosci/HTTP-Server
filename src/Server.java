@@ -10,12 +10,12 @@ public class Server {
     String port = args[0];
     String public_directory = args[1];
     ServerSocket server = null;
-    String project_folder = "C:\\Users\\foxra\\Desktop\\Courses 2nd year\\Computer Networks\\compnet_ass2";
+    String project_directory = System.getProperty("user.dir");
     String path;
 
     try {
       server = new ServerSocket(Integer.parseInt(port));
-      path = project_folder + "\\" + public_directory;
+      path = project_directory + "\\" + public_directory;
 
       while (true) {
 
