@@ -73,7 +73,7 @@ public class ClientHandler implements Runnable {
     String contentType = "Content-Type: text/html" + indent;
     String connectionLine = "Connection: close" + indent;
     FileInputStream fileInputStream = null;
-    DataOutputStream out = new DataOutputStream(socket.getOutputStream()); // it should be inside setter not inside run function, otherwise it doesnt exist here and thats why it invoked null excpetion
+    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
     switch (httpCode) {
 
