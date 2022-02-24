@@ -16,7 +16,7 @@ public class ClientHandler implements Runnable {
 
   public ClientHandler (Socket socket) {
     this.socket = socket;
-    this.path = "/Users/gabrielemarinosci/IdeaProjects/compnet_ass2/public";
+    this.path = "C:\\Users\\foxra\\Desktop\\Courses 2nd year\\Computer Networks\\compnet_ass2\\public";
   }
 
   @Override
@@ -65,11 +65,13 @@ public class ClientHandler implements Runnable {
 
     String indent = "\r\n";
     String statusLine = null;
-    String serverInfo = "Server: gm222hj_rs222ck";
+    String serverInfo = "Server: gm222hj_rs223ck";
     String contentLength = "Content-Length: ";
     String contentType = "Content-Type: ";
     String connectionLine = "Connection: close" + indent;
     FileInputStream fileInputStream = null;
+    DataOutputStream out = new DataOutputStream(socket.getOutputStream()); // it should be inside setter not inside run function, otherwise it doesnt exist here and thats why it invoked null excpetion
+
 
     if (httpCode == 200) {
       //TODO 200 response
@@ -89,25 +91,27 @@ public class ClientHandler implements Runnable {
       //TODO implement 500 response
     }
 
-    out.writeBytes(statusLine);
+
+    out.writeBytes(statusLine); //2nd problem seems like that out is null and setter doesnt work
     out.writeBytes(serverInfo);
     out.writeBytes(contentLength);
     out.writeBytes(contentType);
     out.writeBytes(connectionLine);
 
     if (isFile) {
-      parseFile(fileInputStream);
+      parseFile(fileInputStream); // the problem that evokes here in line 113 and its similar as previous
     } else {
-      out.writeBytes(query);
+      out.writeBytes(query); //No output
     }
   }
 
   public void parseFile(FileInputStream inStream) throws Exception {
+
     byte[] buffer = new byte[1024];
     int bytesRead;
-
+    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
     while ((bytesRead = inStream.read(buffer)) != -1) {
-      out.write(buffer, 0, bytesRead);
+      out.write(buffer, 0, bytesRead); //Basically it is the same problem out doesnt exist in this context thats why it evokes null pointer
     }
     inStream.close();
   }

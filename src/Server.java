@@ -17,8 +17,12 @@ public class Server {
 
         Socket socket = server.accept();
 
-        ClientHandler client = new ClientHandler(socket);
-        new Thread(client).start();
+        ClientHandler clientHandler = new ClientHandler(socket);
+
+        //new Thread(clientHandler).start();1 problem, im not sure but seems like "ClientHandler client" is already a thread
+        //When I try to debug it with you your line "new Thread(client).start();" it seems like threads is not exist
+        //In my solution below it works properly, as I can see it socket=client, clientHandler=Thread, but im not sure but at least it runnable and debuggable
+        clientHandler.run();
       }
     } catch (IOException e){
       e.printStackTrace();
