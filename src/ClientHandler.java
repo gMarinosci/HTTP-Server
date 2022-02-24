@@ -79,36 +79,28 @@ public class ClientHandler implements Runnable {
 
       case 200:
         if (query.equals("/")) {
-          out.writeBytes("HTTP/1.1 200 OK\r\n");
-          out.writeBytes(serverInfo);
-          out.writeBytes(contentType);
-          out.writeBytes(connectionLine);
-          out.writeBytes(indent);
+          statusLine = "HTTP/1.1 200 OK\r\n";
+          printResponse(statusLine, serverInfo, contentType, connectionLine, out);
           out.writeBytes("<html><head><title>Hello guys</title></head><body><h1>this is the landing page</h1></body></html>");
           out.flush();
           out.close();
 
         } else if (new File(path + query).isDirectory()) {
-          out.writeBytes("HTTP/1.1 200 OK\r\n");
-          out.writeBytes(serverInfo);
-          out.writeBytes(contentType);
-          out.writeBytes(connectionLine);
-          out.writeBytes(indent);
+          statusLine = "HTTP/1.1 200 OK\r\n";
+          printResponse(statusLine, serverInfo, contentType, connectionLine, out);
           try {
-            parseFile(query);
+            parseFile(query + "/index.html");
           } catch (Exception e) {
             e.printStackTrace();
           }
           out.flush();
           out.close();
 
-        } else if (!query.endsWith("html") && !query.endsWith("htm")) {
+        } else if (query.endsWith("png")) {
 
-          out.writeBytes("HTTP/1.1 200 OK\r\n");
-          out.writeBytes(serverInfo);
-          out.writeBytes("Content-type: image/png");
-          out.writeBytes(connectionLine);
-          out.writeBytes(indent);
+          statusLine = "HTTP/1.1 200 OK\r\n";
+          contentType = "Content-Type: image/png";
+          printResponse(statusLine, serverInfo, contentType, connectionLine, out);
           try {
             parseFile(query);
           } catch (Exception e) {
@@ -118,11 +110,8 @@ public class ClientHandler implements Runnable {
           out.close();
 
         } else {
-          out.writeBytes("HTTP/1.1 200 OK\r\n");
-          out.writeBytes(serverInfo);
-          out.writeBytes(contentType);
-          out.writeBytes(connectionLine);
-          out.writeBytes(indent);
+          statusLine = "HTTP/1.1 200 OK\r\n";
+          printResponse(statusLine, serverInfo, contentType, connectionLine, out);
           try {
             parseFile(query);
           } catch (Exception e) {
@@ -134,12 +123,8 @@ public class ClientHandler implements Runnable {
         break;
 
       case 404:
-        System.out.println("resource not found");
-        out.writeBytes("HTTP/1.1 404 Not found\r\n");
-        out.writeBytes(serverInfo);
-        out.writeBytes(contentType);
-        out.writeBytes(connectionLine);
-        out.writeBytes("\r\n");
+        statusLine = "HTTP/1.1 404 Not found\r\n";
+        printResponse(statusLine, serverInfo, contentType, connectionLine, out);
         out.writeBytes("<html><head>Error 404</head></html>\r\n");
         out.flush();
         out.close();
@@ -165,6 +150,20 @@ public class ClientHandler implements Runnable {
 
     out.write(data);
     out.flush();
+  }
+
+  public void printResponse(String statusLine, String serverInfo, String contentType, String connectionLine, DataOutputStream out) throws IOException {
+    out.writeBytes(statusLine);
+    out.writeBytes(serverInfo);
+    out.writeBytes(contentType);
+    out.writeBytes(connectionLine);
+    out.writeBytes("\r\n");
+    out.flush();
+    System.out.println("Elaborating new request....");
+    System.out.println(statusLine);
+    System.out.println(serverInfo);
+    System.out.println(contentType);
+    System.out.println(connectionLine);
   }
 }
 
