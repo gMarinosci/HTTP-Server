@@ -12,12 +12,12 @@ import java.util.StringTokenizer;
 public class ClientHandler implements Runnable {
 
   private Socket socket;
-  private String path;
   private DataOutputStream out = null;
+  private String path;
 
-  public ClientHandler (Socket socket) {
+  public ClientHandler (Socket socket, String path) {
     this.socket = socket;
-    this.path = "/Users/gabrielemarinosci/IdeaProjects/compnet_ass2/public";
+    this.path = path;
   }
 
   @Override
